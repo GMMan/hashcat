@@ -275,6 +275,30 @@ void get_next_word (hashcat_ctx_t *hashcat_ctx, HCFILE *fp, char **out_buf, u32 
   user_options_extra_t *user_options_extra = hashcat_ctx->user_options_extra;
   wl_data_t            *wl_data            = hashcat_ctx->wl_data;
 
+  int check_digit = wl_data->check_digit;
+  char *buffer = wl_data->gen_buf;
+  for (int j = 17; j > 0; --j) {
+    if (++buffer[j] > '9')
+    {
+      buffer[j] = '0';
+      check_digit += 1;
+    }
+    else
+    {
+      ++check_digit;
+      break;
+    }
+  }
+
+  check_digit %= 10;
+  buffer[0] = '0' + check_digit;
+  buffer[18] = '0' + (check_digit == 0 ? 0 : (10 - check_digit));
+  wl_data->check_digit = check_digit;
+  *out_buf = wl_data->gen_buf;
+  *out_len = 19;
+
+  return;
+
   while (wl_data->pos < wl_data->cnt)
   {
     u64 off;
@@ -435,6 +459,9 @@ int count_words (hashcat_ctx_t *hashcat_ctx, HCFILE *fp, const char *dictfile, u
   wl_data_t            *wl_data            = hashcat_ctx->wl_data;
 
   //hc_signal (NULL);
+
+  *result = wl_data->iters;
+  return 0;
 
   dictstat_t d;
 
@@ -710,6 +737,28 @@ int wl_data_init (hashcat_ctx_t *hashcat_ctx)
   wl_data->incr    = user_options->segment_size;
   wl_data->cnt     = 0;
   wl_data->pos     = 0;
+
+  u64 seed = 92250000000000000;
+  if (user_options->rp_gen_seed_chgd)
+  {
+    seed += user_options->rp_gen_seed * 100000000000;
+    wl_data->iters = 100000000000;
+  }
+  else
+  {
+    wl_data->iters = 10000000000000;
+  }
+
+  int check_digit = 0;
+  sprintf(wl_data->gen_buf, "0%017lld0", seed);
+  for (int j = 17; j > 0; --j) {
+    check_digit += seed % 10;
+    seed /= 10;
+  }
+  check_digit %= 10;
+  wl_data->gen_buf[0] = '0' + check_digit;
+  wl_data->gen_buf[18] = '0' + (check_digit == 0 ? 0 : (10 - check_digit));
+  wl_data->check_digit = check_digit;
 
   /**
    * choose dictionary parser

@@ -2284,6 +2284,10 @@ typedef struct wl_data
   u64  cnt;
   u64  pos;
 
+  char gen_buf[20];
+  int check_digit;
+  u64 iters;
+
   bool    iconv_enabled;
   iconv_t iconv_ctx;
   char   *iconv_tmp;
