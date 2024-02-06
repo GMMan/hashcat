@@ -738,7 +738,7 @@ int wl_data_init (hashcat_ctx_t *hashcat_ctx)
   wl_data->cnt     = 0;
   wl_data->pos     = 0;
 
-  u64 seed = 92250000000000000;
+  u64 seed = 92470000000000000;
   if (user_options->rp_gen_seed_chgd)
   {
     seed += user_options->rp_gen_seed * 100000000000;
